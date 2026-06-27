@@ -1,149 +1,153 @@
-# 🎙️ 语音翻页器 · Voice Slide Control
+# 🎙️ Voice Slide Control
 
-**讲到哪，翻到哪。** 说一句口令，幻灯片自动翻页 —— 不用点击器，不用回头看电脑。
+> [中文文档](README.zh.md)
 
-你的声音，就是翻页器。
+**You speak, it turns.** Say a command and your slides advance — no clicker, no reaching for the laptop. Your voice is the clicker.
 
-支持 **PowerPoint · WPS · PDF · 网页幻灯片（如 Gamma 导出的 HTML）**。
+Works with **PowerPoint · WPS · PDF · web decks** (e.g. HTML exported from Gamma).
 
 ---
 
-## 它怎么工作
+## How it works
 
 ```
-你说话  →  识别口令「下一页」  →  模拟按一下方向键  →  幻灯片前进
- 🎙️            ☁️ / 🔒                  ⌨️                  ▶️
+You speak  →  command recognized ("next")  →  one arrow key is pressed  →  slide advances
+   🎙️                ☁️ / 🔒                         ⌨️                        ▶️
 ```
 
-关键在第三步：程序**不去对接每个软件的接口**，而是模拟一次方向键发给当前最前面的窗口。
-PowerPoint、WPS、PDF 阅读器、网页幻灯片在全屏放映时**全都用方向键翻页**，所以一套程序通吃所有格式。
+The trick is step three: the app doesn't integrate with any presentation software. It just simulates an arrow key to whatever window is in front. PowerPoint, WPS, PDF readers and web decks all advance on the arrow key in full-screen mode, so one app covers every format.
 
-两种识别方式：
+Two recognition backends:
 
-| | ☁️ 云端 API（推荐） | 🔒 本地模型 |
+| | ☁️ Cloud API (recommended) | 🔒 Local model |
 |---|---|---|
-| 准确率 | 高，中文连读也稳 | 一般，短命令快读易错 |
-| 联网 | 需要 | 完全离线 |
-| 费用 | 用你自己的 API key（有免费额度） | 免费 |
-| 下载 | 无需下载模型 | 需下载约 42MB 模型 |
+| Accuracy | High, robust even on fast speech | OK, weaker on fast short commands |
+| Network | Required | Fully offline |
+| Cost | Your own API key (free tiers exist) | Free |
+| Download | No model download | ~42MB model |
 
 ---
 
-## 🚀 快速开始（不用敲命令）
+## 🚀 Quick start (no terminal needed)
 
-### 第 1 步 · 下载项目
+### 1 · Download
 
-点 GitHub 页面右上角 **Code → Download ZIP**，下载后解压。
+On the GitHub page: **Code → Download ZIP**, then unzip.
 
-### 第 2 步 · 双击启动
+### 2 · Double-click to launch
 
-- **macOS**：双击文件夹里的 **`start.command`**
-  - 首次双击若被系统拦下，**右键点它 → 打开 → 再点「打开」**（只需这一次）
-- **Windows**：双击 **`start.bat`**
+- **macOS**: double-click **`start.command`**
+  - If macOS blocks it the first time, **right-click → Open → Open** (once only).
+- **Windows**: double-click **`start.bat`**
 
-第一次启动会自动准备环境（约 1-2 分钟，仅此一次），然后自动打开浏览器控制台
-`http://127.0.0.1:5001`。
+The first launch sets up the environment automatically (1–2 minutes, once), then opens the control panel at `http://127.0.0.1:5001`.
 
-### 第 3 步 · 拿一个免费 API Key（推荐 Groq）
+### 3 · Get a free API key (Groq recommended)
 
-> 想完全离线、不用 key？跳到下面的 [本地离线模式](#-本地离线模式)。
+> Want fully offline with no key? Jump to [Offline mode](#-offline-mode).
 
-1. 打开 **https://console.groq.com/keys** 注册（免费）
-2. 点 **Create API Key**，复制生成的 key（形如 `gsk_...`）
-3. 回到控制台网页：服务商选 **Groq** → 把 key 粘进输入框 → 点 **「测试连接」**
-4. 看到 ✅「Key 有效」就对了，点 **「保存配置」**
+1. Sign up at **https://console.groq.com/keys** (free)
+2. Click **Create API Key** and copy it (looks like `gsk_...`)
+3. Back in the panel: pick **Groq** → paste the key → click **Test connection**
+4. A green ✅ means it works — click **Save**
 
-也支持 **OpenAI**：在控制台把服务商切到 OpenAI，填 `sk-...` 的 key 即可。
+**OpenAI** also works: switch the provider to OpenAI and paste an `sk-...` key. For best accuracy pick the `gpt-4o-transcribe` model.
 
-### 第 4 步 · 授权（很重要）
+### 4 · Grant permissions (important)
 
-为了「听见」你的声音、并替你「按方向键」，需要给运行它的程序授权：
+To hear you and press keys for you, the app it runs under needs permission:
 
-**macOS** —— 系统设置 → 隐私与安全性：
-- 🎤 **麦克风** → 勾选「终端」（或你用的终端 App）
-- ♿ **辅助功能** → 勾选「终端」（模拟按键必需）
+**macOS** — System Settings → Privacy & Security:
+- 🎤 **Microphone** → enable Terminal (or your terminal app)
+- ♿ **Accessibility** → enable Terminal (required to simulate keystrokes)
 
-> 授权后，在控制台点一次「停止」再「开始监听」让它生效。
+> After granting, click Stop then Start listening again so it takes effect.
 
-**Windows** —— 设置 → 隐私和安全性 → 麦克风 → 允许桌面应用使用麦克风。
-（Windows 模拟按键无需额外授权。）
+**Windows** — Settings → Privacy & security → Microphone → allow desktop apps. (No accessibility permission needed for keystrokes.)
 
-### 第 5 步 · 开讲
+### 5 · Present
 
-1. 在控制台点 **「开始监听」**
-2. 打开你的 PPT / PDF，进入**全屏放映**，让放映窗口保持在最前
-3. 讲完一页，说 **「下一页」**（要回退就说 **「上一页」** 或 **「返回」**）
+1. Click **Start listening**
+2. Open your deck, go **full-screen**, keep that window focused
+3. Finish a slide and say **“next”** (or **“back”** to go back)
 
-控制台右侧的实时日志会显示它听到了什么、有没有翻页。
+The live log on the right shows what it heard and whether it turned.
 
 ---
 
-## 🧭 控制台用法
+## 🧭 The control panel
 
-打开网页控制台后，一切都点点选选完成，无需改文件：
+Everything is point-and-click, no files to edit:
 
-- **识别方式**：云端 API / 本地模型 一键切换
-- **API Key**：选服务商、填 key、测试连接
-- **口令**：自由增删「前进 / 后退」的触发词（以标签形式编辑）
-- **选项**：选语言、麦克风、翻页按键
-- **运行**：保存 → 开始监听 / 停止，配实时日志面板
+- **Recognition**: switch Cloud API / Local model
+- **API key**: pick provider, choose model, paste key, test connection
+- **Commands**: add/remove forward & back trigger phrases as tags (live hot-reload while listening)
+- **Options**: language, microphone, next key, mic sensitivity, reaction speed
+- **Run**: Save → Start / Stop with a live log
+
+The UI is bilingual (English default, 中/EN toggle top-right).
 
 ---
 
-## 🔒 本地离线模式
+## 🔒 Offline mode
 
-不想联网、不想用 key，可以用本地 Vosk 小模型（完全离线、免费）：
+No network, no key — use the local Vosk model (offline, free):
 
-1. 下载中文模型并解压到 `models/` 目录：
+1. Download a model into `models/`:
    ```bash
    cd models
    curl -LO https://alphacephei.com/vosk/models/vosk-model-small-cn-0.22.zip
    unzip vosk-model-small-cn-0.22.zip
    ```
-   （英文模型把上面换成 `vosk-model-small-en-us-0.15`）
-2. 在控制台把识别方式切到 **「本地模型」**，保存 → 开始监听。
+   (For English, use `vosk-model-small-en-us-0.15`.)
+2. In the panel switch to **Local model**, Save → Start.
 
-⚠️ 小模型对短命令的快速连读准确率有限。追求稳定，建议用云端 API。
+⚠️ The small model is limited on fast short commands. For reliability, use the cloud API.
 
 ---
 
-## 🛠️ 给开发者
+## 🌏 Chinese commands & homophones
+
+Short Chinese commands collide as homophones — 下一页 (next page) and 下一夜 (next night) sound identical, so the model often transcribes the wrong character (页/夜, 张/章). The app matches commands by **pinyin**, not characters, so 下一页 / 下一夜 / 夏夜… all resolve to the same command. It also keeps a short pre-roll of audio so the first syllable isn't clipped.
+
+---
+
+## 🛠️ For developers
 
 ```
 voice-slide-control/
-├── start.command / start.bat   # 双击启动（含首次自动安装）
-├── app.py                      # 本地网页控制台（Flask）
-├── web/index.html              # 前端单页
-├── voice_slides.py             # 核心引擎（可单独用命令行跑）
-├── config.*.yaml               # 配置示例（API / 本地 / 中英文)
+├── start.command / start.bat   # double-click launcher (auto-installs on first run)
+├── app.py                      # local web control panel (Flask)
+├── web/index.html              # single-page frontend
+├── voice_slides.py             # core engine (also runnable from the CLI)
+├── config.*.yaml               # example configs (api / local / zh / en)
 └── requirements.txt
 ```
 
-直接用命令行跑引擎（跳过网页）：
+Run the engine directly (skip the web UI):
 
 ```bash
 python -m venv .venv && .venv/bin/pip install -r requirements.txt
-export GROQ_API_KEY=gsk_...                       # 云端模式
+export GROQ_API_KEY=gsk_...                       # cloud mode
 .venv/bin/python voice_slides.py --config config.api.zh.yaml --debug
-.venv/bin/python voice_slides.py --list-devices   # 查看麦克风设备号
+.venv/bin/python voice_slides.py --list-devices   # find your mic index
 ```
 
-**自建识别服务**：任何 OpenAI 兼容的 `/audio/transcriptions` 接口都行，
-把 `config` 里的 `base_url` 指过去即可（例如自己机器上的 whisper 服务）。
+**Self-hosted recognition**: any OpenAI-compatible `/audio/transcriptions` endpoint works — point `base_url` at it (e.g. a whisper server on your own machine).
 
 ---
 
-## ❓ 排查：点了开始监听却没反应
+## ❓ Troubleshooting: started, but nothing happens
 
-打开控制台右侧日志面板，对照看：
+Read the live log on the right:
 
-1. **完全没有 `[rms]` 数字** → 麦克风没采到声。检查麦克风权限和设备选择。
-2. **`[rms]` 数字说话时不变大（一直很小）** → 同上，麦克风权限/设备问题。
-3. **说话时 rms 明显变大，但没出现 `[FINAL]`** → 识别没返回。检查 API key（点「测试连接」）或网络；本地模式则是没识别出口令。
-4. **出现了 `▶ next` 但幻灯片没翻** → 是**辅助功能**权限没给（macOS），去授权后重启监听。
-5. **正常讲话偶尔误翻页** → 把口令换成更不容易撞车的词，或删掉过短的别名。
+1. **No `[rms]` numbers at all** → mic isn't captured. Check mic permission and device.
+2. **`[rms]` doesn't rise when you speak** → same: mic permission / device.
+3. **rms rises but no `[FINAL]`** → no transcription. Test your API key, or check the network; in offline mode the command wasn't recognized.
+4. **`▶ next` appears but the slide doesn't move** → **Accessibility** permission (macOS) isn't granted. Grant it and restart listening.
+5. **Occasional false turns during normal speech** → use less collision-prone commands, or drop very short aliases.
 
-> 常见根因：在「自己的终端 App」里启动才能正常弹出/获得麦克风与辅助功能权限。
+> Common root cause: launch from your own terminal app so microphone and accessibility prompts can be granted.
 
 ---
 
