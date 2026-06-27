@@ -1,0 +1,42 @@
+# ─────────────────────────────────────────────────────────────
+# 命令模式 · 中文语音翻页器
+# COMMAND MODE · Chinese voice clicker
+# ─────────────────────────────────────────────────────────────
+# 讲完一页,说一句固定口令就翻页。不用记下一页内容。
+# Finish a slide, say a fixed command to advance. No need to know what's next.
+
+audio:
+  device: null
+  samplerate: 16000
+
+recognizer:
+  backend: vosk
+  model_path: ./models/vosk-model-small-cn-0.22
+  # 这个小模型不支持锁词表(预编译词图),只能自由识别
+  restrict_to_keywords: false
+  # 返回前 N 个候选,命令出现在任意候选里就算命中(救快速连读)
+  alternatives: 5
+
+control:
+  next_key: right
+  prev_key: left
+  cooldown_sec: 1.0
+  match: contains
+  trigger_on: final     # final = 只在整句结束时判定,过滤半句噪声;partial = 边说边触发更快但更吵
+
+# 口令。匹配忽略空格,所以 Vosk 输出的"下 一 页"也能命中。
+# 只保留小模型听得准的词;"下一步/翻页"易被听岔已删除。
+hotwords:
+  # "下页/上页" = 快读吞掉"一"后的安全别名;不要加"下月/夏夜"这类常用词或噪声
+  next: ["下一页", "下一张", "下页"]
+  back: ["上一页", "上一张", "上页", "返回"]
+
+slides:
+  - { name: "第 1 页", keywords: [] }
+  - { name: "第 2 页", keywords: [] }
+  - { name: "第 3 页", keywords: [] }
+  - { name: "第 4 页", keywords: [] }
+  - { name: "第 5 页", keywords: [] }
+  - { name: "第 6 页", keywords: [] }
+  - { name: "第 7 页", keywords: [] }
+  - { name: "第 8 页", keywords: [] }

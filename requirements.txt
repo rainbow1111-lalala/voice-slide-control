@@ -1,0 +1,15 @@
+# core (always needed)
+sounddevice>=0.4.6
+pynput>=1.7.6
+PyYAML>=6.0
+Flask>=3.0          # web control panel (app.py)
+
+# api backend (recommended) — cloud transcription, no model download
+requests>=2.28
+
+# pinyin matching — makes Chinese voice commands robust to homophones (页/夜/章)
+pypinyin>=0.49
+
+# vosk backend (optional) — fully offline, lower accuracy
+# install only if you want offline mode:  pip install vosk
+vosk>=0.3.42

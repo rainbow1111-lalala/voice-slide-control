@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice Slide Control · 语音翻页器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0A0D18; --panel:#121829; --raised:#1A2138; --line:#283150;
+    --ink:#EDF1FB; --mut:#8E9BC0;
+    --gold:#FFB454; --gold-deep:#F59E2E; --cyan:#5FD2FF; --green:#4FE08C; --red:#FF6B7A;
+    --disp:"Bricolage Grotesque",-apple-system,"PingFang SC",sans-serif;
+    --body:"Manrope",-apple-system,"PingFang SC",sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--void);color:var(--ink);font-family:var(--body);
+    font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:var(--cyan);text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  .mono{font-family:var(--mono)}
+
+  nav{display:flex;align-items:center;justify-content:space-between;padding:22px 24px;max-width:1080px;margin:0 auto}
+  .brand{display:flex;align-items:center;gap:11px;font-family:var(--disp);font-weight:700;font-size:17px;letter-spacing:-.01em}
+  .brand .mk{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+    background:linear-gradient(150deg,var(--gold),var(--gold-deep));color:#1a1205;font-size:16px}
+  .nav-r{display:flex;gap:10px;align-items:center;color:var(--mut);font-size:13px}
+  .nav-r .ghost{border:1px solid var(--line);padding:7px 13px;border-radius:8px;color:var(--ink);cursor:pointer;background:transparent;font-family:var(--body);font-size:13px}
+  .nav-r .ghost:hover{border-color:var(--cyan)}
+  #langToggle{font-family:var(--mono);font-weight:600;min-width:52px}
+
+  .hero{position:relative;padding:46px 0 30px}
+  .hero::before{content:"";position:absolute;inset:-180px 0 auto 0;height:520px;z-index:0;
+    background:radial-gradient(60% 70% at 50% 0%, rgba(255,180,84,.16), rgba(95,210,255,.06) 45%, transparent 72%);pointer-events:none}
+  .hero .wrap{position:relative;z-index:1}
+  .kick{font-family:var(--mono);font-size:12.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);margin-bottom:18px}
+  h1{font-family:var(--disp);font-weight:800;letter-spacing:-.022em;line-height:.98;font-size:clamp(44px,8.5vw,86px);margin:0}
+  h1 .cy{color:transparent;-webkit-text-stroke:1.4px var(--cyan)}
+  .lead{color:var(--mut);font-size:clamp(16px,2vw,19px);max-width:580px;margin:22px 0 0}
+  .lead b{color:var(--ink);font-weight:600}
+  .cta{display:flex;gap:13px;margin-top:30px;flex-wrap:wrap}
+  .btn{font-family:var(--body);font-weight:700;font-size:15px;border:0;border-radius:11px;padding:13px 22px;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease;text-decoration:none;display:inline-block}
+  .btn:active{transform:translateY(1px)}
+  .btn-p{background:linear-gradient(150deg,var(--gold),var(--gold-deep));color:#1a1205;box-shadow:0 8px 26px -10px var(--gold)}
+  .btn-o{background:transparent;color:var(--ink);border:1px solid var(--line)}
+
+  .stage{margin-top:48px;position:relative}
+  .screen{position:relative;border-radius:18px;border:1px solid var(--line);overflow:hidden;
+    background:linear-gradient(180deg,#0e1426,#0b0f1d);box-shadow:0 40px 90px -50px #000, inset 0 1px 0 rgba(255,255,255,.04)}
+  .screen-bar{display:flex;align-items:center;gap:7px;padding:13px 16px;border-bottom:1px solid var(--line);color:var(--mut)}
+  .screen-bar i{width:11px;height:11px;border-radius:50%;background:#2b3354;display:inline-block}
+  .screen-bar i:nth-child(1){background:#ff6b7a55}.screen-bar i:nth-child(2){background:#ffce5a55}.screen-bar i:nth-child(3){background:#4fe08c55}
+  .screen-bar span{margin-left:8px;font-family:var(--mono);font-size:12px}
+  .slide-view{position:relative;aspect-ratio:16/7;display:grid;place-items:center;padding:24px;
+    background:radial-gradient(58% 70% at 50% 46%, rgba(255,180,84,.07), transparent 70%)}
+  .slide-view::before{content:"";position:absolute;inset:0;opacity:.5;pointer-events:none;
+    background-image:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px);background-size:22px 22px;
+    mask-image:radial-gradient(70% 70% at 50% 50%, #000, transparent)}
+  .slide{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:14px;text-align:center;padding:30px;
+    opacity:0;transform:translateX(40px) scale(.98);transition:all .5s cubic-bezier(.2,.8,.2,1)}
+  .slide.on{opacity:1;transform:none}
+  .slide.swap{opacity:0;transform:translateX(-34px) scale(.98)}
+  .slide .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--cyan)}
+  .slide .title{font-family:var(--disp);font-weight:700;font-size:clamp(28px,5vw,52px);letter-spacing:-.02em;line-height:1.04}
+  .slide .pg{position:absolute;right:22px;bottom:18px;font-family:var(--mono);font-size:13px;color:var(--mut)}
+  .progress{position:absolute;left:0;bottom:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--cyan));width:16%;transition:width .5s ease}
+
+  .caption{display:flex;align-items:center;gap:16px;padding:16px 18px;border-top:1px solid var(--line);background:#0a0f1e}
+  .micwrap{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+  .mic{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;flex:none;border:1px solid var(--line);color:var(--cyan);transition:all .25s ease}
+  .caption.hot .mic{background:rgba(95,210,255,.14);border-color:var(--cyan);box-shadow:0 0 0 6px rgba(95,210,255,.08)}
+  .wave{display:flex;align-items:center;gap:3px;height:30px;--amp:.35}
+  .wave b{width:3px;height:100%;border-radius:3px;background:linear-gradient(180deg,var(--cyan),#3a7fb0);transform:scaleY(var(--amp));transform-origin:center;animation:wv 1.1s ease-in-out infinite}
+  .caption.hot .wave{--amp:1}
+  .wave b:nth-child(1){animation-delay:0s}.wave b:nth-child(2){animation-delay:.12s}.wave b:nth-child(3){animation-delay:.24s}.wave b:nth-child(4){animation-delay:.36s}
+  .wave b:nth-child(5){animation-delay:.48s}.wave b:nth-child(6){animation-delay:.30s}.wave b:nth-child(7){animation-delay:.18s}.wave b:nth-child(8){animation-delay:.06s}
+  @keyframes wv{0%,100%{transform:scaleY(calc(var(--amp)*.3))}50%{transform:scaleY(var(--amp))}}
+  .heard{font-family:var(--mono);font-size:14px;color:var(--mut);white-space:nowrap}
+  .heard b{color:var(--green)}
+  .cue{font-family:var(--mono);font-size:12px;color:var(--mut);flex:none;border:1px solid var(--line);padding:6px 11px;border-radius:8px;white-space:nowrap}
+  .cue.fire{color:var(--green);border-color:rgba(79,224,140,.4);background:rgba(79,224,140,.08)}
+
+  .how{padding:64px 0 8px}
+  .seclabel{font-family:var(--mono);font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--mut);margin-bottom:26px}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .step-c{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:24px;position:relative;overflow:hidden}
+  .step-c .n{font-family:var(--disp);font-weight:800;font-size:54px;line-height:1;color:transparent;-webkit-text-stroke:1.5px var(--line)}
+  .step-c h3{font-family:var(--disp);font-weight:700;font-size:21px;margin:14px 0 6px;letter-spacing:-.01em}
+  .step-c p{color:var(--mut);font-size:14px;margin:0}
+  .step-c .arrow{position:absolute;right:18px;top:26px;color:var(--gold);font-size:18px;opacity:.6}
+
+  .console{padding:62px 0 90px}
+  .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:20px;align-items:start}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}
+  .card + .card{margin-top:16px}
+  .ch{font-family:var(--disp);font-weight:700;font-size:16px;letter-spacing:-.01em;display:flex;align-items:center;gap:9px;margin:0 0 16px}
+  .ch .ix{width:23px;height:23px;border-radius:7px;background:var(--raised);border:1px solid var(--line);color:var(--gold);font-family:var(--mono);font-size:12px;font-weight:700;display:grid;place-items:center;flex:none}
+  label{display:block;color:var(--mut);font-size:12.5px;font-weight:600;margin:14px 0 6px}
+  label:first-of-type{margin-top:0}
+  input,select{width:100%;background:var(--raised);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 13px;font-size:14px;font-family:var(--body)}
+  input::placeholder{color:#586089}
+  input:focus,select:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(95,210,255,.12)}
+  .row{display:flex;gap:12px}.row>*{flex:1;min-width:0}
+
+  .seg{display:flex;gap:6px;background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:5px}
+  .seg button{flex:1;background:transparent;border:0;color:var(--mut);font-family:var(--body);font-weight:700;font-size:14px;padding:11px;border-radius:8px;cursor:pointer;transition:all .15s ease}
+  .seg button.on{background:linear-gradient(150deg,var(--gold),var(--gold-deep));color:#1a1205}
+  .hint{color:var(--mut);font-size:12.5px;margin-top:10px;line-height:1.55}
+
+  .btn-s{font-family:var(--body);font-weight:700;font-size:14px;border-radius:10px;padding:11px 16px;cursor:pointer;border:0}
+  .btn-test{background:var(--raised);border:1px solid var(--line);color:var(--ink);width:100%}
+  .btn-test:hover{border-color:var(--cyan)}
+  .btn-save{background:linear-gradient(150deg,var(--gold),var(--gold-deep));color:#1a1205;border:0;width:100%}
+  .msg{font-family:var(--mono);font-size:12.5px;margin-top:10px;min-height:17px}
+  .msg.ok{color:var(--green)} .msg.err{color:var(--red)}
+
+  details{margin-top:14px;border-top:1px dashed var(--line);padding-top:12px}
+  summary{cursor:pointer;color:var(--mut);font-size:12.5px;font-weight:600;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ ";color:var(--gold)}
+  details[open] summary::before{content:"▾ "}
+
+  .tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px;min-height:10px}
+  .tag{display:flex;align-items:center;gap:7px;background:var(--raised);border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-size:13.5px;font-family:var(--mono)}
+  .tag .ar{font-weight:700}
+  .tag.nx .ar{color:var(--green)} .tag.bk .ar{color:var(--gold)}
+  .tag x{cursor:pointer;color:var(--mut);font-style:normal}
+  .tag x:hover{color:var(--red)}
+  .pill{font-family:var(--mono);font-size:11.5px;padding:3px 9px;border-radius:20px;border:1px solid var(--line);color:var(--mut)}
+
+  .mon{position:sticky;top:18px}
+  .runbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .status{display:flex;align-items:center;gap:8px;margin-left:auto;font-family:var(--mono);font-size:12.5px;color:var(--mut)}
+  .dot{width:9px;height:9px;border-radius:50%;background:#3a425f;transition:all .25s ease}
+  .dot.live{background:var(--green);box-shadow:0 0 0 4px rgba(79,224,140,.16)}
+  .btn-go{background:linear-gradient(150deg,var(--green),#2fa968);color:#06210f;flex:1}
+  .btn-go:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.4)}
+  .btn-stop{background:var(--raised);border:1px solid var(--line);color:var(--ink)}
+  .log{background:#070b15;border:1px solid var(--line);border-radius:12px;height:340px;overflow:auto;padding:14px 15px;font-family:var(--mono);font-size:12.5px;line-height:1.65;white-space:pre-wrap;color:#aeb9da}
+  .log div.fire{color:var(--green)} .log div.back{color:var(--gold)} .log div.rms{color:#5a648a} .log div.sys{color:var(--cyan)} .log div.ph{color:#4d5778}
+  .perm{margin-top:13px;font-size:12px;color:var(--mut);line-height:1.6;background:var(--raised);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:9px;padding:11px 13px}
+  .perm b{color:var(--ink)}
+  .meter{display:flex;align-items:center;gap:10px}
+  .meterbar{position:relative;flex:1;height:10px;border-radius:6px;background:var(--raised);border:1px solid var(--line);overflow:hidden}
+  .meterbar i{position:absolute;left:0;top:0;bottom:0;width:0%;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width .08s linear}
+  .meterbar .thr{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--gold);z-index:2}
+  .meternum{font-family:var(--mono);font-size:12px;color:var(--mut);min-width:88px;text-align:right}
+  footer{border-top:1px solid var(--line);padding:26px 0;color:var(--mut);font-size:13px;text-align:center;font-family:var(--mono)}
+
+  .hide{display:none !important}
+  @media (max-width:860px){
+    .grid{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.step-c .arrow{display:none}.mon{position:static}
+  }
+  @media (prefers-reduced-motion:reduce){.wave b{animation:none}.slide{transition:none}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand"><span class="mk">◑</span> <span data-i18n="brand">Voice Slide Control</span></div>
+  <div class="nav-r">
+    <button class="ghost" id="langToggle" onclick="toggleLang()">中文</button>
+    <a class="ghost" href="#setup" data-i18n="nav.start">Get started</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kick">Voice Slide Control · 语音翻页器</div>
+    <h1 data-i18n-html="hero.h1">You speak.<br><span class="cy">It turns.</span></h1>
+    <p class="lead" data-i18n-html="hero.lead">Say a command and your slides advance — <b>PowerPoint · WPS · PDF · web decks</b>. No clicker, no reaching for the laptop. Your voice is the clicker.</p>
+    <div class="cta">
+      <a class="btn btn-p" href="#setup" data-i18n="cta.start">▶ Get started</a>
+      <a class="btn btn-o" href="#how" data-i18n="cta.how">How it works</a>
+    </div>
+
+    <div class="stage">
+      <div class="screen">
+        <div class="screen-bar"><i></i><i></i><i></i><span id="deck-name" data-i18n="deckName">deck.pptx — presenting</span></div>
+        <div class="slide-view" id="sv">
+          <div class="slide on" id="demoSlide">
+            <div class="eyebrow" id="dEyebrow"></div>
+            <div class="title" id="dTitle"></div>
+            <div class="pg" id="dPg"></div>
+          </div>
+        </div>
+        <div class="progress" id="prog"></div>
+        <div class="caption" id="cap">
+          <div class="micwrap">
+            <div class="mic">🎙</div>
+            <div class="wave"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
+            <div class="heard" id="heard"></div>
+          </div>
+          <div class="cue" id="cue"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="seclabel" data-i18n="how.label">How it works</div>
+    <div class="steps">
+      <div class="step-c"><span class="arrow">→</span><div class="n">01</div><h3 data-i18n="step1.t">Hear</h3><p data-i18n="step1.d">Your mic listens continuously and splits speech into utterances at each pause.</p></div>
+      <div class="step-c"><span class="arrow">→</span><div class="n">02</div><h3 data-i18n="step2.t">Recognize</h3><p data-i18n="step2.d">A cloud or local engine spots your command — say, “next”.</p></div>
+      <div class="step-c"><div class="n">03</div><h3 data-i18n="step3.t">Turn</h3><p data-i18n="step3.d">It simulates one arrow key. Every full-screen deck obeys it, so all formats just work.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="console" id="setup">
+  <div class="wrap">
+    <div class="seclabel" data-i18n="setup.label">Setup console</div>
+    <div class="grid">
+
+      <div class="cfg">
+        <div class="card">
+          <h3 class="ch"><span class="ix">1</span> <span data-i18n="c1.title">Choose recognition</span></h3>
+          <div class="seg" id="modeSeg">
+            <button data-mode="api" class="on" data-i18n="mode.api">☁️ Cloud API · accurate</button>
+            <button data-mode="vosk" data-i18n="mode.vosk">🔒 Local · free & offline</button>
+          </div>
+          <p class="hint" id="modeHint"></p>
+        </div>
+
+        <div class="card" id="apiCard">
+          <h3 class="ch"><span class="ix">2</span> <span data-i18n="c2.title">Add API key</span></h3>
+          <label data-i18n="lbl.provider">Provider</label>
+          <select id="provider">
+            <option value="groq" data-i18n="opt.prov.groq">Groq — free tier · very fast · great Chinese (recommended)</option>
+            <option value="openai" data-i18n="opt.prov.openai">OpenAI — gpt-4o-mini-transcribe / whisper-1</option>
+          </select>
+          <label data-i18n="lbl.modelsel">Model</label>
+          <select id="modelSel" onchange="markUnsaved()"></select>
+          <p class="hint" id="signupHint" data-i18n-html="hint.signup">① Open the <a id="signup" href="#" target="_blank" rel="noopener">provider console</a> and create a key → ② paste below → ③ click Test connection.</p>
+          <label data-i18n="lbl.key">API key</label>
+          <div class="row">
+            <input id="key" type="password" data-i18n-ph="ph.key" placeholder="Paste your key, e.g. gsk_… / sk-…" style="flex:2.4">
+            <button class="btn-s btn-test" style="flex:1" onclick="testKey()" data-i18n="btn.test">Test connection</button>
+          </div>
+          <div class="msg" id="keyMsg"></div>
+          <details>
+            <summary data-i18n="adv.summary">Advanced: custom base_url / model (point at a self-hosted whisper server)</summary>
+            <label>base_url</label><input id="baseUrl" data-i18n-ph="ph.default" placeholder="leave blank for default">
+            <label>model</label><input id="model" data-i18n-ph="ph.default" placeholder="leave blank for default">
+          </details>
+        </div>
+
+        <div class="card hide" id="voskCard">
+          <h3 class="ch"><span class="ix">2</span> <span data-i18n="vosk.title">Local model</span></h3>
+          <p id="voskStatus" class="hint"></p>
+          <p class="hint" data-i18n="vosk.hint">The small local model (~42MB) is fully offline and free, but less accurate on fast short commands. For reliability, use the cloud API.</p>
+        </div>
+
+        <div class="card">
+          <h3 class="ch"><span class="ix">3</span> <span data-i18n="c3.title">Commands & options</span></h3>
+          <div class="row">
+            <div>
+              <label data-i18n="lbl.fwd">Forward command</label>
+              <input id="nextIn" data-i18n-ph="ph.add" placeholder="type & press Enter">
+              <div class="tags" id="nextTags"></div>
+            </div>
+            <div>
+              <label data-i18n="lbl.back">Back command</label>
+              <input id="backIn" data-i18n-ph="ph.add" placeholder="type & press Enter">
+              <div class="tags" id="backTags"></div>
+            </div>
+          </div>
+          <div class="row" style="margin-top:16px">
+            <div><label data-i18n="lbl.lang">Command language</label>
+              <select id="language">
+                <option value="zh" data-i18n="opt.lang.zh">Chinese</option>
+                <option value="en" data-i18n="opt.lang.en">English</option>
+                <option value="" data-i18n="opt.lang.auto">Auto</option>
+              </select></div>
+            <div><label data-i18n="lbl.mic">Microphone</label>
+              <select id="device"><option value="" data-i18n="opt.dev.default">System default</option></select></div>
+            <div><label data-i18n="lbl.nextkey">Next key</label>
+              <select id="nextKey">
+                <option value="right" data-i18n="opt.key.right">→ Arrow</option>
+                <option value="space" data-i18n="opt.key.space">Space</option>
+                <option value="pagedown">PageDown</option>
+              </select></div>
+          </div>
+          <div style="margin-top:16px">
+            <label data-i18n="lbl.sens">Mic sensitivity (start_rms)</label>
+            <div class="row" style="align-items:center">
+              <input id="startRms" type="number" min="50" max="6000" step="50" value="500" style="flex:1" oninput="onSensInput()">
+              <div class="meter" style="flex:2.2">
+                <div class="meterbar"><i id="rmsFill"></i><div class="thr" id="rmsThr"></div></div>
+                <span class="meternum" id="rmsNum">— </span>
+              </div>
+            </div>
+            <p class="hint" data-i18n="hint.sens">监听时这里实时显示麦克风电平(青条)。把数值调到：你不说话时条在金线左边，说话时越过金线。</p>
+          </div>
+          <div style="margin-top:16px">
+            <label data-i18n="lbl.react">Reaction speed · end-of-speech pause (ms)</label>
+            <input id="endSilence" type="number" min="150" max="1200" step="50" value="350" oninput="markUnsaved()">
+            <p class="hint" data-i18n="hint.react">越小反应越快(默认 350)。太小会把「next page」这种两词命令切成两段；单字命令(下一页 / next)可放心调小到 250。</p>
+          </div>
+          <div style="margin-top:18px"><button class="btn-s btn-save" onclick="save()" data-i18n="btn.save">💾 Save</button></div>
+          <div class="msg" id="saveMsg"></div>
+        </div>
+      </div>
+
+      <div class="mon">
+        <div class="card">
+          <h3 class="ch"><span class="ix">4</span> <span data-i18n="c4.title">Run & live log</span></h3>
+          <div class="runbar">
+            <button class="btn-s btn-go" id="startBtn" onclick="start()" disabled data-i18n="btn.start">▶ Start listening</button>
+            <button class="btn-s btn-stop" id="stopBtn" onclick="stop()" disabled data-i18n="btn.stop">■ Stop</button>
+            <span class="status"><span class="dot" id="dot"></span><span id="runState"></span></span>
+          </div>
+          <div class="log" id="log"></div>
+          <div class="perm" data-i18n-html="perm">⚠️ On macOS, first run needs <b>Microphone</b> + <b>Accessibility</b> (to send keystrokes) granted to whatever app runs it, in System Settings → Privacy & Security. Restart listening after granting.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer data-i18n="footer">Voice Slide Control · 语音翻页器 · MIT · Your voice is the clicker</footer>
+
+<script>
+const $ = s => document.querySelector(s);
+
+/* ── i18n dictionary ── */
+const T = {
+  en: {
+    "brand":"Voice Slide Control","nav.start":"Get started",
+    "hero.h1":"You speak.<br><span class=\"cy\">It turns.</span>",
+    "hero.lead":"Say a command and your slides advance — <b>PowerPoint · WPS · PDF · web decks</b>. No clicker, no reaching for the laptop. Your voice is the clicker.",
+    "cta.start":"▶ Get started","cta.how":"How it works","deckName":"deck.pptx — presenting",
+    "how.label":"How it works",
+    "step1.t":"Hear","step1.d":"Your mic listens continuously and splits speech into utterances at each pause.",
+    "step2.t":"Recognize","step2.d":"A cloud or local engine spots your command — say, “next”.",
+    "step3.t":"Turn","step3.d":"It simulates one arrow key. Every full-screen deck obeys it, so all formats just work.",
+    "setup.label":"Setup console","c1.title":"Choose recognition",
+    "mode.api":"☁️ Cloud API · accurate","mode.vosk":"🔒 Local · free & offline",
+    "mode.hintApi":"Cloud recognition is accurate, even for fast speech. You bring an API key — we’ll walk you through it, takes under a minute.",
+    "mode.hintVosk":"Fully offline, free, nothing leaves your machine — good when you have no key or no internet. Less accurate on fast short commands.",
+    "c2.title":"Add API key","lbl.provider":"Provider","lbl.modelsel":"Model",
+    "hint.signup":"① Open the <a id=\"signup\" href=\"#\" target=\"_blank\" rel=\"noopener\">provider console</a> and create a key → ② paste below → ③ click Test connection.",
+    "lbl.key":"API key","ph.key":"Paste your key, e.g. gsk_… / sk-…","btn.test":"Test connection",
+    "adv.summary":"Advanced: custom base_url / model (point at a self-hosted whisper server)","ph.default":"leave blank for default",
+    "vosk.title":"Local model","vosk.hint":"The small local model (~42MB) is fully offline and free, but less accurate on fast short commands. For reliability, use the cloud API.",
+    "c3.title":"Commands & options","lbl.fwd":"Forward command","lbl.back":"Back command","ph.add":"type & press Enter",
+    "lbl.lang":"Command language","lbl.mic":"Microphone","lbl.nextkey":"Next key",
+    "opt.lang.zh":"Chinese","opt.lang.en":"English","opt.lang.auto":"Auto",
+    "opt.prov.groq":"Groq — free tier · very fast · great Chinese (recommended)","opt.prov.openai":"OpenAI — gpt-4o-mini-transcribe / whisper-1",
+    "opt.dev.default":"System default","opt.key.right":"→ Arrow","opt.key.space":"Space",
+    "lbl.sens":"Mic sensitivity (start_rms)","hint.sens":"While listening, the cyan bar shows your live mic level. Tune the number so the bar sits LEFT of the gold line when silent, and crosses it when you speak.",
+    "lbl.react":"Reaction speed · end-of-speech pause (ms)","hint.react":"Lower = faster (default 350). Too low splits two-word commands like “next page”; single-word commands (下一页 / next) can go as low as 250.",
+    "btn.save":"💾 Save","c4.title":"Run & live log","btn.start":"▶ Start listening","btn.stop":"■ Stop",
+    "run.idle":"Not running","run.live":"Listening…",
+    "perm":"⚠️ On macOS, first run needs <b>Microphone</b> + <b>Accessibility</b> (to send keystrokes) granted to whatever app runs it, in System Settings → Privacy & Security. Restart listening after granting.",
+    "footer":"Voice Slide Control · 语音翻页器 · MIT · Your voice is the clicker",
+    "log.ph":"Waiting… click “Start listening”, then speak into your mic.",
+    "msg.testing":"Testing…","msg.keyok":"Key works, connected ✓","msg.saved":"✓ Saved",
+    "demo.heard":"Heard: ","cue.idle":"idle","cue.fire":"▶ next","heard.idle":"Listening…",
+    "vosk.ok":"✅ Local Chinese model detected ",
+    "vosk.missing":"❌ No local model found. Download first:<br><span class=\"pill\" style=\"display:inline-block;margin-top:6px\">cd models &amp;&amp; curl -LO https://alphacephei.com/vosk/models/vosk-model-small-cn-0.22.zip &amp;&amp; unzip *.zip</span>",
+  },
+  zh: {
+    "brand":"语音翻页器","nav.start":"开始设置",
+    "hero.h1":"讲到哪，<span class=\"cy\">翻到哪</span>。",
+    "hero.lead":"说一句口令，<b>PowerPoint · WPS · PDF · 网页幻灯片</b> 自动翻页。不用点击器，不用回头看电脑 —— 你的声音，就是翻页器。",
+    "cta.start":"▶ 开始设置","cta.how":"看看原理","deckName":"演讲.pptx — 放映中",
+    "how.label":"它怎么工作",
+    "step1.t":"听","step1.d":"麦克风持续捕捉你的话，按停顿切分成一句句。",
+    "step2.t":"认","step2.d":"云端或本地引擎识别出你说的口令，比如「下一页」。",
+    "step3.t":"翻","step3.d":"模拟一次方向键。任何全屏幻灯片都吃这一下，所以格式通吃。",
+    "setup.label":"设置控制台","c1.title":"选择识别方式",
+    "mode.api":"☁️ 云端 API · 准","mode.vosk":"🔒 本地模型 · 免费离线",
+    "mode.hintApi":"云端识别准确率高，中文连读也认得稳。需要一个 API key，下面带你拿，几十秒搞定。",
+    "mode.hintVosk":"完全离线、零成本、不外传，适合没有 key 或不想联网的场景；短命令快读时准确率有限。",
+    "c2.title":"添加 API Key","lbl.provider":"服务商","lbl.modelsel":"模型",
+    "hint.signup":"① 打开 <a id=\"signup\" href=\"#\" target=\"_blank\" rel=\"noopener\">服务商控制台</a> 创建 key → ② 粘贴到下面 → ③ 点「测试连接」确认能用。",
+    "lbl.key":"API Key","ph.key":"粘贴 key，例如 gsk_… / sk-…","btn.test":"测试连接",
+    "adv.summary":"高级：自定义 base_url / 模型（可指向自建 whisper 服务）","ph.default":"留空用默认",
+    "vosk.title":"本地模型","vosk.hint":"本地小模型（约 42MB）完全离线、零成本、不外传。代价是短命令快读时准确率有限；追求稳定就用云端 API。",
+    "c3.title":"口令与选项","lbl.fwd":"「前进」口令","lbl.back":"「后退」口令","ph.add":"输入后回车添加",
+    "lbl.lang":"口令语言","lbl.mic":"麦克风","lbl.nextkey":"翻页键",
+    "opt.lang.zh":"中文","opt.lang.en":"English","opt.lang.auto":"自动检测",
+    "opt.prov.groq":"Groq — 免费额度大 · 极快 · 中文好（推荐）","opt.prov.openai":"OpenAI — gpt-4o-mini-transcribe / whisper-1",
+    "opt.dev.default":"系统默认","opt.key.right":"→ 方向键","opt.key.space":"空格",
+    "lbl.sens":"麦克风灵敏度 (start_rms)","hint.sens":"监听时这里实时显示麦克风电平(青条)。把数值调到：你不说话时条在金线左边，说话时越过金线。",
+    "lbl.react":"反应速度 · 句末停顿 (ms)","hint.react":"越小反应越快(默认 350)。太小会把「next page」这种两词命令切成两段；单字命令(下一页 / next)可放心调小到 250。",
+    "btn.save":"💾 保存配置","c4.title":"运行与实时日志","btn.start":"▶ 开始监听","btn.stop":"■ 停止",
+    "run.idle":"未运行","run.live":"监听中…",
+    "perm":"⚠️ macOS 首次运行需到「系统设置 → 隐私与安全性」给运行它的程序授权 <b>麦克风</b> 与 <b>辅助功能</b>（模拟按键用），授权后重启监听。",
+    "footer":"语音翻页器 · Voice Slide Control · MIT · 你的声音，就是翻页器",
+    "log.ph":"等待中… 点「开始监听」后，对着麦克风说话试试。",
+    "msg.testing":"测试中…","msg.keyok":"Key 有效，连接成功 ✓","msg.saved":"✓ 已保存",
+    "demo.heard":"听到：","cue.idle":"待命","cue.fire":"▶ 翻页","heard.idle":"聆听中…",
+    "vosk.ok":"✅ 已检测到本地中文模型 ",
+    "vosk.missing":"❌ 未找到本地模型。先下载：<br><span class=\"pill\" style=\"display:inline-block;margin-top:6px\">cd models &amp;&amp; curl -LO https://alphacephei.com/vosk/models/vosk-model-small-cn-0.22.zip &amp;&amp; unzip *.zip</span>",
+  }
+};
+
+/* default command sets per voice language */
+const CMD_DEFAULTS = {
+  zh: { next:["下一页","下一张","下页"], back:["上一页","上页","返回"] },
+  en: { next:["next","next slide","next page"], back:["back","previous","go back"] },
+  "": { next:["下一页","下一张","next","next slide"], back:["上一页","返回","back","previous"] },
+};
+
+let uiLang = new URLSearchParams(location.search).get("lang") || localStorage.getItem("vsc_lang") || "en";
+let mode = "api", INFO = {}, saved = false, running = false;
+const cmd = { next: [], back: [] };
+
+function t(k){ return (T[uiLang] && T[uiLang][k]) ?? (T.en[k] ?? k); }
+
+function applyLang(){
+  document.documentElement.lang = uiLang;
+  document.querySelectorAll("[data-i18n]").forEach(e=>{ const v=t(e.dataset.i18n); if(v!=null) e.textContent=v; });
+  document.querySelectorAll("[data-i18n-html]").forEach(e=>{ const v=t(e.dataset.i18nHtml); if(v!=null) e.innerHTML=v; });
+  document.querySelectorAll("[data-i18n-ph]").forEach(e=>{ const v=t(e.dataset.i18nPh); if(v!=null) e.placeholder=v; });
+  $("#langToggle").textContent = uiLang==="en" ? "中文" : "EN";
+  applyProvider();                               // re-bind signup link (innerHTML was replaced)
+  $("#modeHint").textContent = mode==="api" ? t("mode.hintApi") : t("mode.hintVosk");
+  $("#runState").textContent = (INFO.running ? t("run.live") : t("run.idle"));
+  voskStatus();
+  showLogPlaceholder();
+  if(document.getElementById("demoSlide")) paintSlide(di);   // refresh demo text to new language
+}
+function toggleLang(){ uiLang = uiLang==="en" ? "zh" : "en"; localStorage.setItem("vsc_lang",uiLang); applyLang(); }
+
+async function boot(){
+  try { INFO = await (await fetch("/api/info")).json(); } catch(e){ INFO = {providers:{}}; }
+  loadDevices();
+  applyLangDefaults();          // seed commands from the (default) voice-language dropdown
+  applyLang();
+  updateThr();
+  setRunning(!!INFO.running);
+  connectLog();
+  startDemo();
+}
+
+function applyProvider(){
+  const p = INFO.providers?.[$("#provider").value];
+  const s = document.getElementById("signup");
+  if(p && s){ s.href = p.signup; $("#baseUrl").placeholder = p.base_url; $("#model").placeholder = p.model; }
+  // populate the model dropdown with this provider's presets
+  const sel = $("#modelSel");
+  if(p && sel){
+    const prev = sel.value;
+    sel.innerHTML = "";
+    const ms = p.models || [{id:p.model,label:p.model}];
+    ms.forEach(m=>{ const o=document.createElement("option"); o.value=m.id; o.textContent=m.label; sel.appendChild(o); });
+    sel.value = ms.some(m=>m.id===prev) ? prev : p.model;   // keep user's pick across language toggles
+  }
+}
+$("#provider").addEventListener("change", applyProvider);
+
+async function loadDevices(){
+  try{
+    const d = await (await fetch("/api/devices")).json();
+    if(d.ok) d.devices.forEach(x=>{ const o=document.createElement("option"); o.value=x.index; o.textContent=`#${x.index} ${x.name}`; $("#device").appendChild(o); });
+  }catch(e){}
+}
+
+function voskStatus(){
+  const el = $("#voskStatus"); if(!el) return;
+  el.innerHTML = INFO.vosk_cn ? (t("vosk.ok") + '<span class="pill">vosk-model-small-cn-0.22</span>') : t("vosk.missing");
+}
+
+$("#modeSeg").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-mode]"); if(!b) return;
+  mode = b.dataset.mode;
+  [...$("#modeSeg").children].forEach(x=>x.classList.toggle("on", x===b));
+  $("#apiCard").classList.toggle("hide", mode!=="api");
+  $("#voskCard").classList.toggle("hide", mode!=="vosk");
+  $("#modeHint").textContent = mode==="api" ? t("mode.hintApi") : t("mode.hintVosk");
+  markUnsaved();
+});
+
+/* command tags */
+function applyLangDefaults(){
+  const d = CMD_DEFAULTS[$("#language").value] || CMD_DEFAULTS.zh;
+  cmd.next=[...d.next]; cmd.back=[...d.back]; renderTags(); markUnsaved();
+}
+$("#language").addEventListener("change", applyLangDefaults);
+
+function renderTags(){
+  for(const k of ["next","back"]){
+    const box = $("#"+k+"Tags"); box.innerHTML="";
+    cmd[k].forEach((w,i)=>{ const el=document.createElement("span"); el.className="tag "+(k==="next"?"nx":"bk");
+      el.innerHTML = `<span class="ar">${k==="next"?"▶":"◀"}</span>${w} <x data-k="${k}" data-i="${i}">✕</x>`; box.appendChild(el); });
+  }
+}
+document.addEventListener("click", e=>{ if(e.target.tagName==="X"){ cmd[e.target.dataset.k].splice(+e.target.dataset.i,1); renderTags(); commandsChanged(); }});
+function addTag(k,el){ const v=el.value.trim(); if(v){ cmd[k].push(v); el.value=""; renderTags(); commandsChanged(); } }
+// While listening, command edits auto-save so they hot-reload live (no restart).
+function commandsChanged(){ if(running) save(); else markUnsaved(); }
+$("#nextIn").addEventListener("keydown", e=>{ if(e.key==="Enter") addTag("next",e.target); });
+$("#backIn").addEventListener("keydown", e=>{ if(e.key==="Enter") addTag("back",e.target); });
+
+async function testKey(){
+  const m=$("#keyMsg"); m.className="msg"; m.textContent=t("msg.testing");
+  const base = $("#baseUrl").value || INFO.providers[$("#provider").value]?.base_url || "";
+  try{
+    const r = await (await fetch("/api/test-key",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({base_url:base, key:$("#key").value})})).json();
+    m.className = "msg " + (r.ok?"ok":"err"); m.textContent = r.ok ? t("msg.keyok") : "✗ " + r.error;
+  }catch(e){ m.className="msg err"; m.textContent="✗ "+e; }
+}
+
+function payload(){
+  return { backend: mode, provider: $("#provider").value, base_url: $("#baseUrl").value,
+    model: ($("#model").value.trim() || $("#modelSel")?.value || ""), key: $("#key").value,
+    language: $("#language").value, device: $("#device").value===""? null : Number($("#device").value),
+    next_key: $("#nextKey").value, next: cmd.next, back: cmd.back, slides: 12,
+    start_rms: Number($("#startRms").value) || 500,
+    end_silence_ms: Number($("#endSilence").value) || 350 };
+}
+
+const RMS_SCALE = 1500;   // maps rms 0..1500 to the meter's 0..100%
+function onSensInput(){ updateThr(); markUnsaved(); }
+function updateThr(){
+  const v = Number($("#startRms").value) || 500;
+  $("#rmsThr").style.left = Math.min(100, v / RMS_SCALE * 100) + "%";
+}
+function showRms(v){
+  $("#rmsFill").style.width = Math.min(100, v / RMS_SCALE * 100) + "%";
+  const thr = Number($("#startRms").value) || 500;
+  $("#rmsNum").textContent = v + (v >= thr ? " ●" : "");
+  $("#rmsNum").style.color = v >= thr ? "var(--green)" : "var(--mut)";
+}
+function markUnsaved(){ saved=false; const b=$("#startBtn"); if(b) b.disabled=true; }
+async function save(){
+  const m=$("#saveMsg");
+  try{
+    const r = await (await fetch("/api/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload())})).json();
+    if(r.ok){ saved=true; m.className="msg ok"; m.textContent=t("msg.saved"); $("#startBtn").disabled=false; }
+    else { m.className="msg err"; m.textContent="✗ "+r.error; }
+  }catch(e){ m.className="msg err"; m.textContent="✗ "+e; }
+}
+async function start(){
+  try{ const r=await (await fetch("/api/start",{method:"POST"})).json(); if(r.ok) setRunning(true);
+    else { $("#saveMsg").className="msg err"; $("#saveMsg").textContent="✗ "+r.error; } }catch(e){}
+}
+async function stop(){ try{ await fetch("/api/stop",{method:"POST"}); }catch(e){} setRunning(false); }
+function setRunning(on){
+  $("#startBtn").disabled = on || !saved; $("#stopBtn").disabled = !on;
+  $("#dot").classList.toggle("live", on); $("#runState").textContent = on ? t("run.live") : t("run.idle");
+}
+
+function showLogPlaceholder(){
+  const box=$("#log"); if(box.children.length===0 || (box.children.length===1 && box.firstChild.classList?.contains("ph"))){
+    box.innerHTML=""; const d=document.createElement("div"); d.className="ph"; d.textContent=t("log.ph"); box.appendChild(d);
+  }
+}
+function connectLog(){
+  const box=$("#log");
+  try{
+    const es=new EventSource("/api/logs");
+    es.onmessage=e=>{
+      const line=JSON.parse(e.data);
+      const m=line.match(/\[rms\]\s+(\d+)/);   // live mic level → sensitivity meter
+      if(m){ showRms(Number(m[1])); }
+      const ph=box.querySelector(".ph"); if(ph) ph.remove();
+      const div=document.createElement("div");
+      if(line.includes("▶ next")) div.className="fire";
+      else if(line.includes("◀ back")) div.className="back";
+      else if(line.includes("[rms]")) div.className="rms";
+      else if(line.includes("Ready")||line.includes("====")||line.includes("—")) div.className="sys";
+      div.textContent=line; box.appendChild(div); box.scrollTop=box.scrollHeight;
+      if(line.includes("listener stopped")) setRunning(false);
+      while(box.children.length>500) box.removeChild(box.firstChild);
+    };
+  }catch(e){}
+}
+
+/* hero self-running demo */
+const DEMO = {
+  en:[{e:"OPENING",t:"Hello, world"},{e:"PROBLEM",t:"Clickers fumble at the worst moment"},{e:"SOLUTION",t:"Drive slides with your voice"},{e:"ARCHITECTURE",t:"Hear · Recognize · Turn"},{e:"LIVE DEMO",t:"Now say “next”"},{e:"THANK YOU",t:"Thanks for watching"}],
+  zh:[{e:"开场",t:"你好，世界"},{e:"问题",t:"翻页器总在手忙脚乱时掉链子"},{e:"方案",t:"用声音驱动幻灯片"},{e:"架构",t:"听 · 认 · 翻"},{e:"现场演示",t:"现在，说「下一页」"},{e:"致谢",t:"谢谢观看"}],
+};
+let di=0, demoTimer=null;
+function deck(){ return DEMO[uiLang] || DEMO.en; }
+function paintSlide(i){           // updates ONE persistent element — never stacks DOM
+  const d=deck();
+  $("#dEyebrow").textContent=d[i].e; $("#dTitle").textContent=d[i].t; $("#dPg").textContent=`${i+1} / ${d.length}`;
+  $("#prog").style.width = ((i+1)/d.length*100)+"%";
+}
+function advanceDemo(){
+  const el=$("#demoSlide");
+  el.classList.add("swap");                       // fade/slide out
+  setTimeout(()=>{ di=(di+1)%deck().length; paintSlide(di); el.classList.remove("swap"); }, 300);  // swap content, fade in
+}
+function startDemo(){
+  $("#heard").textContent=t("heard.idle"); $("#cue").textContent=t("cue.idle");
+  di=0; paintSlide(0);
+  if(matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+  if(demoTimer) clearInterval(demoTimer);          // guard against double intervals
+  demoTimer=setInterval(()=>{
+    const cap=$("#cap"), cue=$("#cue"), heard=$("#heard");
+    cap.classList.add("hot");
+    heard.innerHTML = t("demo.heard") + "<b>" + (uiLang==="zh"?"下一页":"next") + "</b>";
+    cue.classList.add("fire"); cue.textContent=t("cue.fire");
+    setTimeout(advanceDemo, 720);
+    setTimeout(()=>{ cap.classList.remove("hot"); cue.classList.remove("fire"); cue.textContent=t("cue.idle"); heard.textContent=t("heard.idle"); }, 1700);
+  }, 3200);
+}
+
+boot();
+</script>
+</body>
+</html>

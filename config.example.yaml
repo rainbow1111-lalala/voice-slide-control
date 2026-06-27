@@ -1,0 +1,48 @@
+# ─────────────────────────────────────────────────────────────
+# voice-slide-control  ·  configuration
+# ─────────────────────────────────────────────────────────────
+# Logic: "say-it-then-next". Each slide owns one or more keywords.
+# When the keyword for the CURRENT slide is heard, the app presses
+# the "next" key and advances its internal pointer to the next slide.
+# This avoids accidental re-triggers from words spoken earlier.
+
+audio:
+  device: null          # null = system default mic. Run `python voice_slides.py --list-devices` to pick one.
+  samplerate: 16000     # Vosk models expect 16k mono.
+
+recognizer:
+  backend: vosk         # vosk | whisper
+  # Path to an unpacked Vosk model. Download from https://alphacephei.com/vosk/models
+  #   English small:  vosk-model-small-en-us-0.15
+  #   Chinese:        vosk-model-cn-0.22  (or small-cn)
+  model_path: ./models/vosk-model-small-en-us-0.15
+  # Lock recognition to your keyword list for much higher accuracy (English models only).
+  # Set false if you use the Chinese model or want free transcription + fuzzy match.
+  restrict_to_keywords: true
+
+control:
+  next_key: right       # key sent to the focused window: right | space | pagedown | down
+  prev_key: left        # used only if a "go back" hotword is configured
+  cooldown_sec: 1.5     # ignore repeat triggers within this window (anti double-fire)
+  match: contains       # contains = keyword is a substring of what was heard
+
+# Optional global hotwords that work on ANY slide
+hotwords:
+  back: ["go back", "previous slide"]   # say this to step backwards
+  # next: ["next slide"]                # uncomment for a universal "next" command
+
+# The deck. Order matters — index 0 is your first slide.
+# `keywords` = phrases that, when spoken while on this slide, advance to the next.
+slides:
+  - name: "Title"
+    keywords: ["welcome", "let's get started"]
+  - name: "Problem"
+    keywords: ["the problem", "pain point"]
+  - name: "Solution / RAG engineering"
+    keywords: ["rag engineering", "retrieval"]
+  - name: "Architecture"
+    keywords: ["architecture", "how it works"]
+  - name: "Demo"
+    keywords: ["let me show you", "demo"]
+  - name: "Closing"
+    keywords: ["thank you", "questions"]

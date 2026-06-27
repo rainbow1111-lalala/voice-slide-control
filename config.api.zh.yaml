@@ -1,0 +1,61 @@
+# ─────────────────────────────────────────────────────────────
+# API 模式 · 中文语音翻页器(云端识别,推荐)
+# COMMAND MODE · Chinese voice clicker via cloud API (recommended)
+# ─────────────────────────────────────────────────────────────
+# 零模型下载。用任意 OpenAI 兼容的转写接口,自己填 API key(放环境变量)。
+# No model download. Any OpenAI-compatible transcription endpoint; you supply
+# the API key via an env var.
+
+audio:
+  device: null
+  samplerate: 16000
+
+recognizer:
+  backend: api
+
+  # ── 默认: Groq(免费额度大、极快、中文准)/ default: Groq (fast, cheap, good CN) ──
+  base_url: https://api.groq.com/openai/v1
+  model: whisper-large-v3-turbo
+  api_key_env: GROQ_API_KEY        # 运行前: export GROQ_API_KEY=gsk_...
+  language: zh                     # 提示语言,留空则自动检测
+  # 不用 prompt 列举口令:会让 whisper 回显口令(甚至误注入"返回"导致翻反)。
+  # 同音字(页/夜/章)由下游的拼音匹配解决。
+
+  # ── 备选: OpenAI / alternative: OpenAI ──
+  # base_url: https://api.openai.com/v1
+  # model: gpt-4o-mini-transcribe   # 或 whisper-1
+  # api_key_env: OPENAI_API_KEY     # export OPENAI_API_KEY=sk-...
+
+  # ── 备选: 自建(如你 Mac Studio 上的 whisper 服务)/ self-hosted whisper server ──
+  # base_url: http://100.82.111.72:8000/v1
+  # model: whisper-1
+  # api_key_env: DUMMY_KEY
+
+# VAD:基于音量切句。你说话→录,停顿→发送识别。
+# Energy VAD: record while you speak, transcribe when you pause.
+vad:
+  start_rms: 500          # 高于此音量算"在说话"。--debug 会打印实时 rms,据此调
+  end_silence_ms: 600     # 停顿多久算一句话结束
+  min_speech_ms: 250      # 短于此忽略(防咳嗽/噪声)
+  max_speech_ms: 6000     # 单句最长,超了强制识别
+
+control:
+  next_key: right
+  prev_key: left
+  cooldown_sec: 1.0
+  match: contains
+  trigger_on: final
+
+hotwords:
+  next: ["下一页", "下一张", "翻页"]
+  back: ["上一页", "上一张", "返回"]
+
+slides:
+  - { name: "第 1 页", keywords: [] }
+  - { name: "第 2 页", keywords: [] }
+  - { name: "第 3 页", keywords: [] }
+  - { name: "第 4 页", keywords: [] }
+  - { name: "第 5 页", keywords: [] }
+  - { name: "第 6 页", keywords: [] }
+  - { name: "第 7 页", keywords: [] }
+  - { name: "第 8 页", keywords: [] }

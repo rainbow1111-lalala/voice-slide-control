@@ -1,0 +1,20 @@
+# secrets — never commit your API key
+.env
+
+# local config written by the web panel / your own runs
+config.web.yaml
+config.yaml
+
+# downloaded speech models (large)
+models/
+
+# python env & caches
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# misc
+cprof/
+*.png
+.DS_Store

@@ -1,0 +1,49 @@
+# ─────────────────────────────────────────────────────────────
+# COMMAND MODE  ·  voice clicker
+# ─────────────────────────────────────────────────────────────
+# You don't bind keywords to slide content. Instead you say a fixed
+# command to advance — like a verbal clicker. No need to know what's
+# on the next slide. Finish a slide, say "next slide", it advances.
+
+audio:
+  device: null
+  samplerate: 16000
+
+recognizer:
+  backend: vosk
+  model_path: ./models/vosk-model-small-en-us-0.15
+  # IMPORTANT: false here. We use free recognition so normal speech is
+  # NOT force-mapped onto the command words (which would cause false
+  # page-turns). Commands are matched as substrings of what you say.
+  restrict_to_keywords: false
+
+control:
+  next_key: right
+  prev_key: left
+  cooldown_sec: 1.0     # snappier; raise if it double-fires
+  match: contains
+
+# The commands. Pick distinctive phrases unlikely to occur mid-sentence.
+hotwords:
+  next: ["next", "next slide", "next page"]
+  back: ["back", "go back", "previous slide"]
+
+# In command mode the per-slide keywords stay empty — only the commands fire.
+# Names are just for the on-screen position readout.
+slides:
+  - name: "slide 1"
+    keywords: []
+  - name: "slide 2"
+    keywords: []
+  - name: "slide 3"
+    keywords: []
+  - name: "slide 4"
+    keywords: []
+  - name: "slide 5"
+    keywords: []
+  - name: "slide 6"
+    keywords: []
+  - name: "slide 7"
+    keywords: []
+  - name: "slide 8"
+    keywords: []
