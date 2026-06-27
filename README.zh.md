@@ -85,16 +85,17 @@ GitHub 页面右上角 **Code → Download ZIP**，下载后解压。
 
 ## 🔒 本地离线模式
 
-不想联网、不想用 key，用本地 Vosk 小模型（离线、免费）：
+不想联网、不想用 API key，用本地 Vosk 小模型（离线、免费）。模型约 42MB，**没有打包进下载包**（免得用云端的人白白多下）。
 
-1. 下载模型到 `models/`：
+1. 控制台切到 **本地模型**，若没有模型，点 **⬇️ 下载中文模型**（一键，不用碰命令行）。
+2. 或手动下载：
    ```bash
    cd models
    curl -LO https://alphacephei.com/vosk/models/vosk-model-small-cn-0.22.zip
    unzip vosk-model-small-cn-0.22.zip
    ```
    （英文换成 `vosk-model-small-en-us-0.15`）
-2. 控制台切到 **本地模型**，保存 → 开始监听。
+3. 保存 → 开始监听。
 
 ⚠️ 小模型对短命令快读准确率有限，追求稳定用云端 API。
 

@@ -365,6 +365,9 @@ const T = {
     "msg.testing":"Testing…","msg.keyok":"Key works, connected ✓","msg.saved":"✓ Saved",
     "demo.heard":"Heard: ","cue.idle":"idle","cue.fire":"▶ next","heard.idle":"Listening…",
     "vosk.ok":"✅ Local Chinese model detected ",
+    "vosk.need":"❌ No local model yet (~42MB, not bundled to keep the download small).",
+    "vosk.download":"Download Chinese model",
+    "vosk.downloading":"Downloading… (~42MB, please wait)",
     "vosk.missing":"❌ No local model found. Download first:<br><span class=\"pill\" style=\"display:inline-block;margin-top:6px\">cd models &amp;&amp; curl -LO https://alphacephei.com/vosk/models/vosk-model-small-cn-0.22.zip &amp;&amp; unzip *.zip</span>",
   },
   zh: {
@@ -400,6 +403,9 @@ const T = {
     "msg.testing":"测试中…","msg.keyok":"Key 有效，连接成功 ✓","msg.saved":"✓ 已保存",
     "demo.heard":"听到：","cue.idle":"待命","cue.fire":"▶ 翻页","heard.idle":"聆听中…",
     "vosk.ok":"✅ 已检测到本地中文模型 ",
+    "vosk.need":"❌ 还没有本地模型（约42MB，为了让下载包更小没有打包进去）。",
+    "vosk.download":"下载中文模型",
+    "vosk.downloading":"下载中…（约42MB，请稍候）",
     "vosk.missing":"❌ 未找到本地模型。先下载：<br><span class=\"pill\" style=\"display:inline-block;margin-top:6px\">cd models &amp;&amp; curl -LO https://alphacephei.com/vosk/models/vosk-model-small-cn-0.22.zip &amp;&amp; unzip *.zip</span>",
   }
 };
@@ -468,7 +474,21 @@ async function loadDevices(){
 
 function voskStatus(){
   const el = $("#voskStatus"); if(!el) return;
-  el.innerHTML = INFO.vosk_cn ? (t("vosk.ok") + '<span class="pill">vosk-model-small-cn-0.22</span>') : t("vosk.missing");
+  if(INFO.vosk_cn){
+    el.innerHTML = t("vosk.ok") + '<span class="pill">vosk-model-small-cn-0.22</span>';
+  } else {
+    el.innerHTML = t("vosk.need") +
+      ' <button class="btn-s btn-test" style="width:auto;margin-top:10px;padding:9px 14px" onclick="downloadModel()">⬇️ ' + t("vosk.download") + '</button>' +
+      '<span id="dlMsg" class="msg" style="display:block"></span>';
+  }
+}
+async function downloadModel(){
+  const m=$("#dlMsg"); if(m){ m.className="msg"; m.textContent=t("vosk.downloading"); }
+  try{
+    const r=await (await fetch("/api/download-model",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({lang:"zh"})})).json();
+    if(r.ok){ INFO.vosk_cn=true; voskStatus(); }
+    else if(m){ m.className="msg err"; m.textContent="✗ "+(r.error||"download failed"); }
+  }catch(e){ if(m){ m.className="msg err"; m.textContent="✗ "+e; } }
 }
 
 $("#modeSeg").addEventListener("click", e=>{

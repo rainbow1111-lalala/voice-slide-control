@@ -91,16 +91,17 @@ The UI is bilingual (English default, 中/EN toggle top-right).
 
 ## 🔒 Offline mode
 
-No network, no key — use the local Vosk model (offline, free):
+No network, no API key — use the local Vosk model (offline, free). The model (~42MB) is **not bundled** in the download (so cloud users don't carry it).
 
-1. Download a model into `models/`:
+1. In the panel switch to **Local model** — if the model is missing, click **⬇️ Download Chinese model** (one click, no terminal).
+2. Or fetch it manually:
    ```bash
    cd models
    curl -LO https://alphacephei.com/vosk/models/vosk-model-small-cn-0.22.zip
    unzip vosk-model-small-cn-0.22.zip
    ```
    (For English, use `vosk-model-small-en-us-0.15`.)
-2. In the panel switch to **Local model**, Save → Start.
+3. Save → Start.
 
 ⚠️ The small model is limited on fast short commands. For reliability, use the cloud API.
 

@@ -13,12 +13,14 @@ Run:
     # open http://127.0.0.1:5001
 """
 
+import io
 import json
 import os
 import queue
 import subprocess
 import sys
 import threading
+import zipfile
 from collections import deque
 from pathlib import Path
 
@@ -31,6 +33,14 @@ CONFIG_PATH = ROOT / "config.web.yaml"
 ENV_PATH = ROOT / ".env"
 VOSK_CN_SMALL = ROOT / "models" / "vosk-model-small-cn-0.22"
 VOSK_EN_SMALL = ROOT / "models" / "vosk-model-small-en-us-0.15"
+
+# Downloadable offline models (not shipped in the repo — fetched on demand)
+VOSK_MODELS = {
+    "zh": ("vosk-model-small-cn-0.22",
+           "https://alphacephei.com/vosk/models/vosk-model-small-cn-0.22.zip"),
+    "en": ("vosk-model-small-en-us-0.15",
+           "https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip"),
+}
 
 PROVIDERS = {
     "groq": {
@@ -163,6 +173,26 @@ def info():
         "vosk_en": VOSK_EN_SMALL.exists(),
         "running": _proc["p"] is not None,
     })
+
+
+@app.route("/api/download-model", methods=["POST"])
+def download_model():
+    """Fetch + unzip an offline Vosk model on demand (it's not in the repo/ZIP)."""
+    data = request.get_json(force=True)
+    lang = data.get("lang", "zh")
+    name, url = VOSK_MODELS.get(lang, VOSK_MODELS["zh"])
+    dest = ROOT / "models" / name
+    if dest.exists():
+        return jsonify({"ok": True, "msg": "already installed"})
+    try:
+        (ROOT / "models").mkdir(exist_ok=True)
+        r = requests.get(url, timeout=180)
+        r.raise_for_status()
+        with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+            z.extractall(ROOT / "models")
+        return jsonify({"ok": dest.exists(), "name": name})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
 
 
 @app.route("/api/devices")
